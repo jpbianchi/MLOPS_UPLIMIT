@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from ray import serve
 from ray.serve.handle import DeploymentHandle
 
-from src.data_models import SimpleModelRequest, SimpleModelRespone, SimpleModelResults
+from src.data_models import SimpleModelRequest, SimpleModelResponse, SimpleModelResults
 from src.model import Model
 
 app = FastAPI(
@@ -27,8 +27,8 @@ class APIIngress:
     @app.post("/predict")
     async def predict(self, request: SimpleModelRequest):
         # TODO: Use the handle.predict which is a remote function
-        # to get the result
-        return SimpleModelRespone.model_validate(result.model_dump())
+        result = await self.handle.predict.remote(request.review)
+        return SimpleModelResponse.model_validate(result.model_dump())
 
 
 @serve.deployment(
@@ -41,6 +41,7 @@ class SimpleModel:
 
     def predict(self, review: str) -> SimpleModelResults:
         # TODO: Use the Model.predict to get the result
+        result = Model.predict(self.session, review)
         return SimpleModelResults.model_validate(result)
 
 
